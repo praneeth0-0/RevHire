@@ -9,12 +9,6 @@ pipeline {
 
     stages {
 
-        stage('Clone') {
-            steps {
-                git branch: 'main', url: 'https://github.com/praneeth0-0/RevHire'
-            }
-        }
-
         stage('Build') {
             steps {
                 sh '''
@@ -26,7 +20,10 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t revhire .'
+                sh '''
+                cd BackEnd
+                docker build -t revhire .
+                '''
             }
         }
 
