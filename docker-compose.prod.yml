@@ -24,13 +24,5 @@ services:
     depends_on:
       - mysql
 
-  frontend:
-    # Point to the image in ECR
-    image: 938595516781.dkr.ecr.ap-south-2.amazonaws.com/revhire:frontend-latest
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-
 volumes:
   mysql_data:

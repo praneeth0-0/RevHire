@@ -57,7 +57,7 @@ pipeline {
         stage('Deploy Frontend to S3') {
             steps {
                 sh '''
-                aws s3 sync FrontEnd/Frontend/dist/revhire-frontend/browser s3://<YOUR_S3_BUCKET_NAME> --delete
+                aws s3 sync FrontEnd/Frontend/dist/revhire-frontend/browser s3://revhire-frontend-praneeeth --delete
                 '''
             }
         }
