@@ -66,8 +66,8 @@ pipeline {
             steps {
                 sh '''
                 aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
-                docker-compose -f docker-compose.prod.yml pull backend
-                docker-compose -f docker-compose.prod.yml up -d backend
+                docker compose -f docker-compose.prod.yml pull backend
+                docker compose -f docker-compose.prod.yml up -d backend
                 '''
             }
         }
