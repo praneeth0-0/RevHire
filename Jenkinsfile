@@ -9,7 +9,7 @@ pipeline {
 
     stages {
 
-        stage('Build') {
+        stage('Backend: Build & Package') {
             steps {
                 sh '''
                 cd BackEnd
@@ -18,18 +18,30 @@ pipeline {
             }
         }
 
-        stage('Docker Build') {
+        stage('Backend: Docker Build') {
             steps {
                 sh '''
                 cd BackEnd
-                docker build -t revhire .
+                docker build -t revhire-backend .
                 '''
             }
         }
 
-        stage('Tag Image') {
+        stage('Frontend: Docker Build') {
             steps {
-                sh 'docker tag revhire:latest $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO_NAME:latest'
+                sh '''
+                cd FrontEnd/Frontend
+                docker build -t revhire-frontend .
+                '''
+            }
+        }
+
+        stage('Tag Images') {
+            steps {
+                sh '''
+                docker tag revhire-backend:latest $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO_NAME:latest
+                docker tag revhire-frontend:latest $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO_NAME-frontend:latest
+                '''
             }
         }
 
@@ -38,6 +50,7 @@ pipeline {
                 sh '''
                 aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
                 docker push $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO_NAME:latest
+                docker push $AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPO_NAME-frontend:latest
                 '''
             }
         }
