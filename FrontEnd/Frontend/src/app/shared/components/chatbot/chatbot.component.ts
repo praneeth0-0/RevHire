@@ -30,7 +30,7 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
             if (!this.auth.isAuthenticated()) {
                 sessionStorage.removeItem(this.STORAGE_KEY);
                 this.messages.set([
-                    { role: 'assistant', content: 'Hello! po ra puka Assistant. How can I help you today?' }
+                    { role: 'assistant', content: 'Hello! I am your RevHire AI Assistant. How can I help you today?' }
                 ]);
             }
         }, { allowSignalWrites: true });
