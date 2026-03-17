@@ -38,17 +38,23 @@ pipeline {
             }
         }
 
-        stage('Build Frontend') {
+       stage('Build Frontend') {
             steps {
                 dir('FrontEnd/Frontend') {
                     sh '''
-                    npm ci --legacy-peer-deps
+                    echo "Cleaning node modules..."
+                    rm -rf node_modules package-lock.json
+        
+                    echo "Installing dependencies..."
+                    npm install --legacy-peer-deps
+        
+                    echo "Building Angular..."
+                    export NODE_OPTIONS="--max-old-space-size=512"
                     npm run build
                     '''
                 }
             }
         }
-
         stage('Deploy Frontend') {
             steps {
                 sh '''
