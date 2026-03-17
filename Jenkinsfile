@@ -3,13 +3,25 @@ pipeline {
 
     options {
         timestamps()
+        disableConcurrentBuilds()
     }
 
     environment {
         NODE_OPTIONS = "--max-old-space-size=512"
+        BACKEND_JAR = "BackEnd/target/RevHire-HiringPlatform-0.0.1-SNAPSHOT.jar"
+        FRONTEND_BUILD = "FrontEnd/Frontend/dist/revhire-frontend/browser"
+        NGINX_PATH = "/var/www/html"
+        S3_BUCKET = "revhire-frontend-praneeeth"
+        AWS_REGION = "ap-south-2"
     }
 
     stages {
+
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
 
         stage('Checkout Code') {
             steps {
@@ -21,7 +33,10 @@ pipeline {
         stage('Build Backend') {
             steps {
                 dir('BackEnd') {
-                    sh 'mvn clean package -DskipTests'
+                    sh '''
+                    echo "Building Spring Boot backend..."
+                    mvn clean package -DskipTests
+                    '''
                 }
             }
         }
@@ -29,39 +44,53 @@ pipeline {
         stage('Restart Backend') {
             steps {
                 sh '''
-                echo "Stopping existing backend if running..."
+                echo "Stopping existing backend process..."
                 pkill -f RevHire-HiringPlatform || true
 
                 echo "Starting backend..."
-                nohup java -jar BackEnd/target/RevHire-HiringPlatform-0.0.1-SNAPSHOT.jar > backend.log 2>&1 &
+                nohup java -jar $BACKEND_JAR > backend.log 2>&1 &
                 '''
             }
         }
 
-       stage('Build Frontend') {
+        stage('Build Frontend') {
             steps {
                 dir('FrontEnd/Frontend') {
                     sh '''
-                    echo "Cleaning node modules..."
+                    echo "Cleaning old dependencies..."
                     rm -rf node_modules package-lock.json
-        
+
                     echo "Installing dependencies..."
                     npm install --legacy-peer-deps
-        
-                    echo "Building Angular..."
+
+                    echo "Building Angular project..."
                     export NODE_OPTIONS="--max-old-space-size=512"
                     npm run build
                     '''
                 }
             }
         }
-        stage('Deploy Frontend') {
+
+        stage('Deploy Frontend to EC2 Nginx') {
             steps {
                 sh '''
                 echo "Deploying frontend to Nginx..."
 
-                sudo rm -rf /var/www/html/*
-                sudo cp -r FrontEnd/Frontend/dist/revhire-frontend/browser/* /var/www/html/
+                sudo rm -rf $NGINX_PATH/*
+                sudo cp -r $FRONTEND_BUILD/* $NGINX_PATH/
+                '''
+            }
+        }
+
+        stage('Deploy Frontend to S3') {
+            steps {
+                sh '''
+                echo "Uploading frontend to S3..."
+
+                aws s3 sync $FRONTEND_BUILD/ s3://$S3_BUCKET \
+                --delete \
+                --region $AWS_REGION \
+                --cache-control max-age=0
                 '''
             }
         }
@@ -69,12 +98,17 @@ pipeline {
     }
 
     post {
+
         success {
             echo "Deployment Successful"
         }
 
         failure {
             echo "Pipeline Failed"
+        }
+
+        cleanup {
+            cleanWs()
         }
     }
 }
